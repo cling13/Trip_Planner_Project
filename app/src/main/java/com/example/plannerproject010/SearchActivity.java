@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
@@ -73,7 +75,11 @@ public class SearchActivity extends AppCompatActivity implements OnMapReadyCallb
             @Override
             public void onClick(View view) {
                 placeSearchList.clear();
-                searchLocation(5,placeSearchText.getText().toString(),placeSearchList,placeSearchAdapter);
+                try {
+                    searchLocation(5,placeSearchText.getText().toString(),placeSearchList,placeSearchAdapter);
+                } catch (PackageManager.NameNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
@@ -97,9 +103,11 @@ public class SearchActivity extends AppCompatActivity implements OnMapReadyCallb
         secondGoogleMap.setgMap();
     }
 
-    public void searchLocation(int searchCnt, String locationName,ArrayList<listClass> listClass,SimpleAdapter simpleAdapter) {
+    public void searchLocation(int searchCnt, String locationName,ArrayList<listClass> listClass,SimpleAdapter simpleAdapter) throws PackageManager.NameNotFoundException {
+        ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+
         //place 검색 요청 생성
-        Places.initialize(getApplicationContext(), "AIzaSyBw-QO4NsKeF4slw6fd2C48YnX03w5IbRA");
+        Places.initialize(getApplicationContext(), appInfo.metaData.getString("com.google.android.geo.API_KEY"));
         PlacesClient placesClient = Places.createClient(this);
         AutocompleteSessionToken token = AutocompleteSessionToken.newInstance();
 

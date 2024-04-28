@@ -3,8 +3,11 @@ package com.example.plannerproject010;
 import static com.example.plannerproject010.MainActivity.context;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +18,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.PhotoMetadata;
@@ -45,12 +49,12 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.ViewHolder
 
     @Override
     public void onItemSwipe(int position) {
-        data.remove(position);
         MyDBHelper dbHelper=new MyDBHelper(context,"plantable",null,1);
         SQLiteDatabase db=dbHelper.getWritableDatabase();
         String sql="DELETE FROM plantable WHERE id = '"+data.get(position).getId()+"';";
         db.execSQL(sql);
         db.close();
+        data.remove(position);
         notifyItemRemoved(position);
     }
 
@@ -86,9 +90,23 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.ViewHolder
 
     SimpleAdapter(ArrayList<listClass>list, ItemClickListner itemClickListner){
 
+        try {
+            // 패키지 매니저를 통해 앱의 메타 데이터 가져오기
+            ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+            // 메타 데이터에서 API 키 가져오기
+            String key = appInfo.metaData.getString("com.google.android.geo.API_KEY");
+
+
+            Places.initialize(context,key);
+            // 가져온 API 키 사용하기
+            // 예: Google Places API 호출 등
+        } catch (PackageManager.NameNotFoundException e) {
+            // 메타 데이터를 찾을 수 없는 경우 예외 처리
+            e.printStackTrace();
+        }
+
         data=list;
         this.itemClickListner=itemClickListner;
-        Places.initialize(context,"AIzaSyABN87oljSBD55FAbT9AgnYEGcDBFXuVCg");
     }
 
     @NonNull
@@ -174,6 +192,8 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.ViewHolder
             }
 
         }).addOnFailureListener((exception) -> {
+            Log.e("FetchPlace", "Failed to fetch place: " + exception.getMessage());
+            exception.printStackTrace();
         });
     }
 }

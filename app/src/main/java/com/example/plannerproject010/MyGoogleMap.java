@@ -14,14 +14,10 @@ import java.util.ArrayList;
 
 public class MyGoogleMap {
     GoogleMap gMap;
-
     PolylineOptions polylineOptions;
 
     MyGoogleMap(GoogleMap gMap){
         this.gMap=gMap;
-        polylineOptions = new PolylineOptions();
-        polylineOptions.color(Color.BLUE);
-        polylineOptions.width(5);
     }
 
 
@@ -34,7 +30,7 @@ public class MyGoogleMap {
 
     void addMark(LatLng latLng, String title)
     {
-        gMap.addMarker(new MarkerOptions().position(latLng).title(title).icon(BitmapDescriptorFactory.fromResource(R.drawable.makrer1)));
+        gMap.addMarker(new MarkerOptions().position(latLng).title(title)/*.icon(BitmapDescriptorFactory.fromResource(R.drawable.makrer1))*/);
         gMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,16)); //마커로 카메라 이동
     }
 
@@ -49,6 +45,9 @@ public class MyGoogleMap {
     }
 
     public void addPolyline(ArrayList<LatLng> latLngs) {
+        polylineOptions = new PolylineOptions();
+        polylineOptions.color(Color.BLUE);
+        polylineOptions.width(5);
         polylineOptions.addAll(latLngs);
         gMap.addPolyline(polylineOptions);
     }

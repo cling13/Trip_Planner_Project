@@ -17,25 +17,22 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
-import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,8 +42,11 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, ItemClickListner {
@@ -54,17 +54,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     MyGoogleMap mainGoogleMap;
     LocationManager locationManager;
     SimpleAdapter totalPlanAdapter;
-    PolylineOptions polylineOptions;
     ArrayList<listClass> totalPlanList = new ArrayList<>(); //메인액티비티 플랜 저장하는 리스트
     ArrayList<listClass> msgBoxList;
-    //double currentLat,currentLog,currentTime;
     SQLiteDatabase sqlDB;
     MyDBHelper listDBHelper, mapDBHelper;
+    ArrayList<LatLng> latLngs = new ArrayList<>();
     public static Context context;
-    //ArrayList<LatLng> LatLngList;
-    //static boolean sw=false;
-    static String date = "2024-03-21";
+    static LocalDate localDate;
     Handler handler = new Handler();
+    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 
 
     ItemClickListner itemClickListner= new ItemClickListner() {
@@ -85,14 +83,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //LatLngList = new ArrayList<LatLng>();
+        Date d = new Date();
+        format.format(d);
+        localDate=d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
         context=this;
         locationManager=(LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         ActivityResultLauncher<String[]> locationPermissionRequest = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(),
                 result->{
-                    Boolean fineLocationGranted=result.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION,false);
-                    Boolean coarseLocationGranted=result.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION,false);
+                    Boolean fineLocationGranted=result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION,false);
+                    Boolean coarseLocationGranted=result.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION,false);
                     if(fineLocationGranted!=null&&fineLocationGranted){
                         Toast.makeText(getApplicationContext(), "자세한 위치 권한이 허용됨", Toast.LENGTH_SHORT).show();
                     }
@@ -105,21 +106,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 });
 
         if (ContextCompat.checkSelfPermission(getApplicationContext(),
-                android.Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED&&
+                Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED&&
                 ContextCompat.checkSelfPermission(getApplicationContext(),
-                        android.Manifest.permission.ACCESS_COARSE_LOCATION)!=
+                        Manifest.permission.ACCESS_COARSE_LOCATION)!=
                         PackageManager.PERMISSION_GRANTED){
             locationPermissionRequest.launch(new String[]{
-                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION
             });
         }
+
+        View ivMapTransparent = (View) findViewById(R.id.ivMapTransparent);
+        ScrollView scrollView = (ScrollView) findViewById(R.id.scrollView);
+
+        ivMapTransparent.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        scrollView.requestDisallowInterceptTouchEvent(true);
+                        return false;
+                    case MotionEvent.ACTION_UP:
+                        scrollView.requestDisallowInterceptTouchEvent(false);
+                        return true;
+                    case MotionEvent.ACTION_MOVE:
+                        scrollView.requestDisallowInterceptTouchEvent(true);
+                        return false;
+                    default:
+                        return true;
+                }
+            }
+        });
 
         //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000,1,locationListener);
 
 
         listDBHelper = new MyDBHelper(this,"plantable",null,1);
-        mapDBHelper = new MyDBHelper(this,"movetable",null,1);
+
         //맵 연결
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mainMapFragment);
         mapFragment.getMapAsync(this);
@@ -146,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         TextView dateText = (TextView) findViewById(R.id.dateText);
-        dateText.setText(date);
+        dateText.setText(localDate.toString());
 
         dateText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -159,20 +182,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 dlg.setPositiveButton("확인", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        date = Integer.toString(datePicker.getYear())+"-"+Integer.toString(datePicker.getMonth())+"-"+Integer.toString(datePicker.getDayOfMonth());
+                        localDate = LocalDate.of(datePicker.getYear(),datePicker.getMonth()+1,datePicker.getDayOfMonth());
 
-                        dateText.setText((CharSequence) date);
+                        dateText.setText(localDate.toString());
 
                         mainGoogleMap.clear();
 
                         //읽어오기
                         totalPlanList.clear();
                         sqlDB= listDBHelper.getReadableDatabase();
-                        String sql="select * from plantable WHERE date = '"+date+"';";
+                        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
                         Log.d("sql2",sql);
                         Cursor cursor = sqlDB.rawQuery(sql,null);
-                        while(cursor.moveToNext()){
-                            totalPlanAdapter.addItemList(cursor.getString(1),MainActivity.this);
+                        while(cursor.moveToNext()) {
+                            totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
                         }
                         totalPlanAdapter.notifyDataSetChanged();
                         sqlDB.close();
@@ -182,94 +205,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        /*
-        Button btn=(Button) findViewById(R.id.button2);
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sqlDB= listDBHelper.getWritableDatabase();
-                listDBHelper.onUpgrade(sqlDB,1,1);
-                sqlDB.close();
-                sqlDB=mapDBHelper.getWritableDatabase();
-                mapDBHelper.onUpgrade(sqlDB,1,1);
-                sqlDB.close();
-
-                mainGoogleMap.clear();
-                totalPlanList.clear();
-                totalPlanAdapter.notifyDataSetChanged();
-            }
-        });
-
-        Button btnStart=(Button) findViewById(R.id.button3);
-
-        btnStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!sw){
-                    sw=true;
-                    LatLngList.clear();
-                    btnStart.setText("종료");
-                }
-                else {
-                    sw = false;
-                    LatLngList.clear();
-                    mainGoogleMap.clear();
-                    btnStart.setText("시작");
-                }
-            }
-        });
-
-        Button btnview=(Button) findViewById(R.id.button4);
-        btnview.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sqlDB= mapDBHelper.getReadableDatabase();
-                String sql="select * from movetable WHERE date = '"+date+"';";
-                Cursor cursor = sqlDB.rawQuery(sql,null);
-                mainGoogleMap.clear();
-                LatLngList.clear();
-                while(cursor.moveToNext()){
-                    LatLng latLng=new LatLng(cursor.getDouble(1),cursor.getDouble(2));
-                    Log.d("latlng",Double.toString(latLng.latitude));
-                    Log.d("latlng",Double.toString(latLng.longitude));
-                    polylineOptions = new PolylineOptions();
-                    polylineOptions.color(Color.RED);
-                    polylineOptions.width(5);
-                    LatLngList.add(latLng);
-                    polylineOptions.addAll(LatLngList);
-                    mainGoogleMap.addPolyline(polylineOptions);
-                    mainGoogleMap.moveCamera(latLng);
-                }
-
-                totalPlanAdapter.notifyDataSetChanged();
-                sqlDB.close();
-            }
-        });
-
-        Button btnWeb=(Button) findViewById(R.id.button5);
-        btnWeb.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                final String urlStr="https://cling13.iwinv.net/json.php";
-                Log.d("url",urlStr);
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        requestUrl2(urlStr);
-                    }
-                }).start();
-            }
-        });
-
-         */
-
     }
 
     //맵 초기설정
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mainGoogleMap = new MyGoogleMap(googleMap);
         mainGoogleMap.setgMap();
+
+        sqlDB= listDBHelper.getReadableDatabase();
+        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
+        Log.d("sql2",sql);
+        Cursor cursor = sqlDB.rawQuery(sql,null);
+        while(cursor.moveToNext()) {
+            totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
+        }
+        totalPlanAdapter.notifyDataSetChanged();
+        sqlDB.close();
     }
 
     //세컨드 액티비티에서 플랜 정보 받아와서 리스트에 추가해 주는 부분
@@ -357,20 +308,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     void addList(listClass tmp)
     {
+        latLngs.clear();
+        //mainGoogleMap.clear();
+
         tmp.setBtnName("주변 검색");
         totalPlanList.add(tmp);
         totalPlanAdapter.notifyDataSetChanged();
-        mainGoogleMap.addMark(tmp.getlatLng(), tmp.getName());
+
+        for(listClass t : totalPlanList)
+        {
+            latLngs.add(t.getlatLng());
+            mainGoogleMap.addMark(t.getlatLng(),t.getName());
+        }
+        mainGoogleMap.addPolyline(latLngs);
     }
     void addDB(listClass tmp)
     {
         sqlDB= listDBHelper.getReadableDatabase();
-        String sql="INSERT INTO plantable VALUES ('"+date+"', '"+tmp.getId()+"');";
+        String sql="INSERT INTO plantable VALUES ('"+ localDate.toString() +"', '"+tmp.getId()+"');";
         Log.d("sql",sql);
         sqlDB.execSQL(sql);
 
         final String urlStr="https://cling13.iwinv.net/insert_ok_place.php?" +
-                "date="+date+
+                "date="+ localDate.toString() +
                 "&placeId="+tmp.getId();
         Log.d("url",urlStr);
 
@@ -382,49 +342,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }).start();
     }
 
-    /*
-    final LocationListener locationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(@NonNull Location location) {
-            String provider = location.getProvider();
-            currentLat=location.getLatitude();
-            currentLog=location.getLongitude();
-            currentTime=System.currentTimeMillis();
-
-            LatLng latLng=new LatLng(currentLat,currentLog);
-
-
-            if(sw) {
-                mainGoogleMap.moveCamera(latLng);
-                polylineOptions = new PolylineOptions();
-                polylineOptions.color(Color.RED);
-                polylineOptions.width(5);
-                LatLngList.add(latLng);
-                polylineOptions.addAll(LatLngList);
-                mainGoogleMap.addPolyline(polylineOptions);
-
-                sqlDB= mapDBHelper.getWritableDatabase();
-                String sql="INSERT INTO movetable VALUES ('"+date+"', '"+currentLat+"', '"+currentLog+"');";
-                sqlDB.execSQL(sql);
-                sqlDB.close();
-
-                final String urlStr="https://cling13.iwinv.net/insert_ok_latlng.php?" +
-                        "date="+date+
-                        "&lat="+currentLat+
-                        "&lng="+currentLog;
-                Log.d("url",urlStr);
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        requestUrl2(urlStr);
-                    }
-                }).start();
-            }
-        }
-    };
-
-     */
 
     public void requestUrl2(String urlStr) {
         StringBuilder output = new StringBuilder();
