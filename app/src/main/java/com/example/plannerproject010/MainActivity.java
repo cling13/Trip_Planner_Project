@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -47,6 +48,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, ItemClickListner {
@@ -54,16 +56,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     MyGoogleMap mainGoogleMap;
     LocationManager locationManager;
     SimpleAdapter totalPlanAdapter;
-    ArrayList<listClass> totalPlanList = new ArrayList<>(); //메인액티비티 플랜 저장하는 리스트
+    ArrayList<PlanClass> totalPlanList = new ArrayList<>(); //메인액티비티 플랜 저장하는 리스트
     ArrayList<listClass> msgBoxList;
     SQLiteDatabase sqlDB;
     MyDBHelper listDBHelper, mapDBHelper;
     ArrayList<LatLng> latLngs = new ArrayList<>();
     public static Context context;
-    static LocalDate localDate;
     Handler handler = new Handler();
-    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
     TextView textStartDate, textEndDate;
+    DatePickerDialog startDatePicker, endDatePicker;
+    ArrayList<listClass> totalPlanList2 = new ArrayList<>();
 
 
     ItemClickListner itemClickListner= new ItemClickListner() {
@@ -84,9 +86,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Date d = new Date();
-        format.format(d);
-        localDate=d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        DatePickerDialog.OnDateSetListener startDateListner =
+                (datePicker, i, i1, i2) -> {
+                    textStartDate.setText(i + "-" + i1 + "-" + i2);
+
+                    Calendar selectedDate = Calendar.getInstance();
+                    selectedDate.set(i, i1, i2);
+
+                    endDatePicker.getDatePicker().setMinDate(selectedDate.getTimeInMillis());
+                };
+
+        DatePickerDialog.OnDateSetListener endDateListner =
+                (datePicker, i, i1, i2) -> {
+                    textEndDate.setText(i + "-" + i1 + "-" + i2);
+
+                    Calendar selectedDate = Calendar.getInstance();
+                    selectedDate.set(i, i1, i2);
+
+                    startDatePicker.getDatePicker().setMaxDate(selectedDate.getTimeInMillis());
+                };
+
+        Calendar calendar = Calendar.getInstance();
+        startDatePicker = new DatePickerDialog(MainActivity.this,startDateListner, calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DATE));
+        endDatePicker = new DatePickerDialog(MainActivity.this,endDateListner, calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DATE));
 
         context=this;
         locationManager=(LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -171,15 +193,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         textStartDate = (TextView) findViewById(R.id.textStartDate);
         textEndDate = (TextView) findViewById(R.id.textEndDate);
-        textStartDate.setText(localDate.toString());
-        textEndDate.setText(localDate.toString());
+
+        textStartDate.setText(calendar.get(Calendar.YEAR)+"-"+calendar.get(Calendar.MONTH)+"-"+calendar.get(Calendar.DATE));
+        textEndDate.setText(calendar.get(Calendar.YEAR)+"-"+calendar.get(Calendar.MONTH)+"-"+calendar.get(Calendar.DATE));
 
         textStartDate.setOnClickListener(v-> {
-            setDate(textStartDate);
+            startDatePicker.show();
         });
 
         textEndDate.setOnClickListener(v -> {
-            setDate(textEndDate);
+            endDatePicker.show();
         });
 
     }
@@ -193,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
         Log.d("sql2",sql);
         Cursor cursor = sqlDB.rawQuery(sql,null);
-        while(cursor.moveToNext()) {
+         while(cursor.moveToNext()) {
             totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
         }
         totalPlanAdapter.notifyDataSetChanged();
@@ -344,41 +367,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    void setDate(TextView textView) //날짜 설정
+    void setDate(TextView date) //날짜 설정
     {
-        View datepicker_msg_box = (View) getLayoutInflater().inflate(R.layout.datepicker_msg_box, null);
-        AlertDialog.Builder dlg=new AlertDialog.Builder(MainActivity.this);
-        DatePicker datePicker = (DatePicker) datepicker_msg_box.findViewById(R.id.datePicker) ;
+        mainGoogleMap.clear();
 
-        dlg.setView(datepicker_msg_box);
-        dlg.setPositiveButton("확인", (dialog, which) -> {
-            localDate = LocalDate.of(datePicker.getYear(),datePicker.getMonth()+1,datePicker.getDayOfMonth());
+        //읽어오기
+        totalPlanList.clear();
+        sqlDB= listDBHelper.getReadableDatabase();
 
-            textView.setText(localDate.toString());
-            try {
-                if(format.parse((String) textEndDate.getText()).compareTo(format.parse((String) textStartDate.getText()))<0)
-                    textStartDate=textEndDate;
-            } catch (ParseException e) {
-                throw new RuntimeException(e);
-            }
+        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
 
-            mainGoogleMap.clear();
+        Cursor cursor = sqlDB.rawQuery(sql,null);
+        while(cursor.moveToNext()) {
+            totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
+        }
 
-            //읽어오기
-            totalPlanList.clear();
-            sqlDB= listDBHelper.getReadableDatabase();
-
-            String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
-
-            Cursor cursor = sqlDB.rawQuery(sql,null);
-            while(cursor.moveToNext()) {
-                totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
-            }
-
-            totalPlanAdapter.notifyDataSetChanged();
-            sqlDB.close();
-        });
-        dlg.show();
+        totalPlanAdapter.notifyDataSetChanged();
+        sqlDB.close();
     }
 }
 

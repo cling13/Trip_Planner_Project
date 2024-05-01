@@ -59,27 +59,13 @@
                     />
             </fragment>
 
-            <androidx.recyclerview.widget.RecyclerView
+            <ListView
                 android:id="@+id/planList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
                 android:nestedScrollingEnabled="true"
-                android:scrollbars="vertical">
-
-            </androidx.recyclerview.widget.RecyclerView>
-
-            <Button
-                android:id="@+id/plan_Add_Btn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="일정 추가" />
-
-            <Button
-                android:id="@+id/findBtn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="추천 여행지" />
+                android:scrollbars="vertical"/>
 
         </LinearLayout>
     </ScrollView>
