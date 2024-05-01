@@ -23,7 +23,7 @@ public class MyGoogleMap {
 
     void setgMap()
     {
-        LatLng defaultLocation = new LatLng(35.9450, 126.6828);
+        LatLng defaultLocation = new LatLng(35.9645, 126.9801);
         gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation,16));
 
     }

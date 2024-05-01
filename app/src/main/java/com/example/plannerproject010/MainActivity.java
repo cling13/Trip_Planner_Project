@@ -42,12 +42,12 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.CompletableFuture;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, ItemClickListner {
 
@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     static LocalDate localDate;
     Handler handler = new Handler();
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+    TextView textStartDate, textEndDate;
 
 
     ItemClickListner itemClickListner= new ItemClickListner() {
@@ -168,41 +169,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
 
-        TextView dateText = (TextView) findViewById(R.id.dateText);
-        dateText.setText(localDate.toString());
+        textStartDate = (TextView) findViewById(R.id.textStartDate);
+        textEndDate = (TextView) findViewById(R.id.textEndDate);
+        textStartDate.setText(localDate.toString());
+        textEndDate.setText(localDate.toString());
 
-        dateText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                View datepicker_msg_box = (View) getLayoutInflater().inflate(R.layout.datepicker_msg_box, null);
-                AlertDialog.Builder dlg=new AlertDialog.Builder(MainActivity.this);
-                DatePicker datePicker = (DatePicker) datepicker_msg_box.findViewById(R.id.datePicker) ;
+        textStartDate.setOnClickListener(v-> {
+            setDate(textStartDate);
+        });
 
-                dlg.setView(datepicker_msg_box);
-                dlg.setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        localDate = LocalDate.of(datePicker.getYear(),datePicker.getMonth()+1,datePicker.getDayOfMonth());
-
-                        dateText.setText(localDate.toString());
-
-                        mainGoogleMap.clear();
-
-                        //읽어오기
-                        totalPlanList.clear();
-                        sqlDB= listDBHelper.getReadableDatabase();
-                        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
-                        Log.d("sql2",sql);
-                        Cursor cursor = sqlDB.rawQuery(sql,null);
-                        while(cursor.moveToNext()) {
-                            totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
-                        }
-                        totalPlanAdapter.notifyDataSetChanged();
-                        sqlDB.close();
-                    }
-                });
-                dlg.show();
-            }
+        textEndDate.setOnClickListener(v -> {
+            setDate(textEndDate);
         });
 
     }
@@ -246,64 +223,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onItemBtnClick(int position) {
-        String msg = totalPlanList.get(position).getName() + " 주변의 여행지 3곳만 알려줘 추가 설명 없이 이름만 말해줘";
 
-        View search_msg_box = (View) getLayoutInflater().inflate(R.layout.search_msg_box, null);
-        msgBoxList = new ArrayList<>();
-        SimpleAdapter msgBoxAdapter = new SimpleAdapter(msgBoxList, itemClickListner);
-        RecyclerView msgBoxListView = (RecyclerView) search_msg_box.findViewById(R.id.msgBoxList);
-        msgBoxListView.setLayoutManager(new LinearLayoutManager(this));
-        msgBoxListView.setAdapter(msgBoxAdapter);
-
-        //gpt에서 추천 여행지 받아오기
-        GptCallback gptCallback = new GptCallback();
-        CompletableFuture<String> apiResponseFuture = gptCallback.callAPI(msg);
-
-        // CompletableFuture의 thenAcceptAsync 메서드를 사용하여 API 응답을 처리
-        apiResponseFuture.thenAcceptAsync(response -> {
-            // API 호출 성공 시 처리 (response 변수에 API 응답이 들어 있습니다)
-            Log.d("API Response", response);
-
-            runOnUiThread(() -> {
-                try {
-                    JSONObject responseObject = new JSONObject(response);
-                    JSONArray choicesArray = responseObject.getJSONArray("choices");
-
-                    // choices 배열의 첫 번째 객체 가져오기
-                    JSONObject firstChoice = choicesArray.getJSONObject(0);
-
-                    // 첫 번째 객체에서 "text" 속성 가져오기
-                    String gptReturnText = firstChoice.getString("text");
-
-                    int[] idx = new int[3];
-                    String[] resText = new String[3];
-                    idx[0] = gptReturnText.indexOf("1.");
-                    idx[1] = gptReturnText.indexOf("2.");
-                    idx[2] = gptReturnText.indexOf("3.");
-                    resText[0] = gptReturnText.substring(idx[0] + 3, idx[1]).replace(System.getProperty("line.separator"), "");
-                    resText[1] = gptReturnText.substring(idx[1] + 3, idx[2]).replace(System.getProperty("line.separator"), "");
-                    resText[2] = gptReturnText.substring(idx[2] + 3).replace(System.getProperty("line.separator"), "");
-
-                    AlertDialog.Builder dlg = new AlertDialog.Builder(MainActivity.this);
-                    dlg.setTitle("주변 추천 여행지");
-                    dlg.setView(search_msg_box);
-                    msgBoxList.clear();
-                    for (String gptmsg : resText) {
-                        ((SearchActivity) SearchActivity.context).searchLocation(1, gptmsg, msgBoxList, msgBoxAdapter);
-                    }
-                    dlg.setPositiveButton("닫기",null);
-                    dlg.show();
-
-                } catch (Exception e) {
-                    Log.d("error", e.toString());
-                }
-                ;
-            });
-        }).exceptionally(e -> {
-            // API 호출 실패 시 처리
-            Log.e("API Error", "Error occurred: " + e.getMessage());
-            return null;
-        });
     }
 
     void addList(listClass tmp)
@@ -422,6 +342,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    void setDate(TextView textView) //날짜 설정
+    {
+        View datepicker_msg_box = (View) getLayoutInflater().inflate(R.layout.datepicker_msg_box, null);
+        AlertDialog.Builder dlg=new AlertDialog.Builder(MainActivity.this);
+        DatePicker datePicker = (DatePicker) datepicker_msg_box.findViewById(R.id.datePicker) ;
+
+        dlg.setView(datepicker_msg_box);
+        dlg.setPositiveButton("확인", (dialog, which) -> {
+            localDate = LocalDate.of(datePicker.getYear(),datePicker.getMonth()+1,datePicker.getDayOfMonth());
+
+            textView.setText(localDate.toString());
+            try {
+                if(format.parse((String) textEndDate.getText()).compareTo(format.parse((String) textStartDate.getText()))<0)
+                    textStartDate=textEndDate;
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+
+            mainGoogleMap.clear();
+
+            //읽어오기
+            totalPlanList.clear();
+            sqlDB= listDBHelper.getReadableDatabase();
+
+            String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
+
+            Cursor cursor = sqlDB.rawQuery(sql,null);
+            while(cursor.moveToNext()) {
+                totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
+            }
+
+            totalPlanAdapter.notifyDataSetChanged();
+            sqlDB.close();
+        });
+        dlg.show();
     }
 }
 

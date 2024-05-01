@@ -13,8 +13,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -34,6 +37,7 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +49,8 @@ public class SearchActivity extends AppCompatActivity implements OnMapReadyCallb
     MyGoogleMap secondGoogleMap;
     ArrayList<listClass> placeSearchList;
     ArrayList<listClass> intentList;
+    ArrayList<listClass> templist;
+    SimpleAdapter tempadapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
