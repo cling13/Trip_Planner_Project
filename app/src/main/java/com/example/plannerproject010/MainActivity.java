@@ -3,20 +3,16 @@ package com.example.plannerproject010;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.app.DatePickerDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -24,8 +20,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
-import android.widget.DatePicker;
+import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,19 +38,15 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, ItemClickListner {
 
     MyGoogleMap mainGoogleMap;
     LocationManager locationManager;
     SimpleAdapter totalPlanAdapter;
+    PlanAdapter planAdapter;
     ArrayList<PlanClass> totalPlanList = new ArrayList<>(); //메인액티비티 플랜 저장하는 리스트
     ArrayList<listClass> msgBoxList;
     SQLiteDatabase sqlDB;
@@ -65,8 +56,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     Handler handler = new Handler();
     TextView textStartDate, textEndDate;
     DatePickerDialog startDatePicker, endDatePicker;
-    ArrayList<listClass> totalPlanList2 = new ArrayList<>();
-
 
     ItemClickListner itemClickListner= new ItemClickListner() {
         @Override
@@ -88,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         DatePickerDialog.OnDateSetListener startDateListner =
                 (datePicker, i, i1, i2) -> {
-                    textStartDate.setText(i + "-" + i1 + "-" + i2);
+                    textStartDate.setText(i + "-" + i1+1 + "-" + i2);
 
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(i, i1, i2);
@@ -98,12 +87,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         DatePickerDialog.OnDateSetListener endDateListner =
                 (datePicker, i, i1, i2) -> {
-                    textEndDate.setText(i + "-" + i1 + "-" + i2);
+                    textEndDate.setText(i + "-" + i1+1 + "-" + i2);
 
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(i, i1, i2);
 
                     startDatePicker.getDatePicker().setMaxDate(selectedDate.getTimeInMillis());
+                    String date = (i + "-" + (i1+1) + "-" + i2);
+
+                    PlanClass tmp = new PlanClass(MainActivity.this,date);
+                    totalPlanList.add(tmp);
+                    planAdapter.notifyDataSetChanged();
                 };
 
         Calendar calendar = Calendar.getInstance();
@@ -171,24 +165,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         //xml 아이디 연결
-        Button goSecActBtn = (Button) findViewById(R.id.plan_Add_Btn);
+        //Button goSecActBtn = (Button) findViewById(R.id.plan_Add_Btn);
         RecyclerView totalPlanListView = findViewById(R.id.planList);
-
+        totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
         //리사이클러뷰 어댑터와 핸들러 연결
         totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
-        totalPlanAdapter = new SimpleAdapter(totalPlanList, this);
-        ItemTouchHelper helper = new ItemTouchHelper(new ItemTouchHelperCallback(totalPlanAdapter));
-        totalPlanListView.setAdapter(totalPlanAdapter);
-        helper.attachToRecyclerView(totalPlanListView);
+        planAdapter = new PlanAdapter(totalPlanList);
+        //totalPlanAdapter = new SimpleAdapter(totalPlanList, this);
+        //ItemTouchHelper helper = new ItemTouchHelper(new ItemTouchHelperCallback(totalPlanAdapter));
+        totalPlanListView.setAdapter(planAdapter);
+        //helper.attachToRecyclerView(totalPlanListView);
 
         //세컨드 액티비티로 전환하는 버튼
-        goSecActBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), SearchActivity.class);
-                mStartForResult.launch(intent);
-            }
-        });
+//        goSecActBtn.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent intent = new Intent(getApplicationContext(), SearchActivity.class);
+//                mStartForResult.launch(intent);
+//            }
+//        });
 
 
         textStartDate = (TextView) findViewById(R.id.textStartDate);
@@ -209,18 +204,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //맵 초기설정
     public void onMapReady(@NonNull GoogleMap googleMap) {
-        mainGoogleMap = new MyGoogleMap(googleMap);
-        mainGoogleMap.setgMap();
+//        mainGoogleMap = new MyGoogleMap(googleMap);
+//        mainGoogleMap.setgMap();
+//
+//        sqlDB= listDBHelper.getReadableDatabase();
+//        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
+//        Log.d("sql2",sql);
+//        Cursor cursor = sqlDB.rawQuery(sql,null);
+//         while(cursor.moveToNext()) {
+//            totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
+//        }
+//        totalPlanAdapter.notifyDataSetChanged();
+//        sqlDB.close();
 
-        sqlDB= listDBHelper.getReadableDatabase();
-        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
-        Log.d("sql2",sql);
-        Cursor cursor = sqlDB.rawQuery(sql,null);
-         while(cursor.moveToNext()) {
-            totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
-        }
-        totalPlanAdapter.notifyDataSetChanged();
-        sqlDB.close();
+
     }
 
     //세컨드 액티비티에서 플랜 정보 받아와서 리스트에 추가해 주는 부분
@@ -241,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onItemClick(int position) {
-        mainGoogleMap.moveCamera(totalPlanList.get(position).getlatLng());
+        //mainGoogleMap.moveCamera(totalPlanList.get(position).getlatLng());
     }
 
     @Override
@@ -251,38 +248,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     void addList(listClass tmp)
     {
-        latLngs.clear();
-        //mainGoogleMap.clear();
-
-        tmp.setBtnName("주변 검색");
-        totalPlanList.add(tmp);
-        totalPlanAdapter.notifyDataSetChanged();
-
-        for(listClass t : totalPlanList)
-        {
-            latLngs.add(t.getlatLng());
-            mainGoogleMap.addMark(t.getlatLng(),t.getName());
-        }
-        mainGoogleMap.addPolyline(latLngs);
+//        latLngs.clear();
+//        //mainGoogleMap.clear();
+//
+//        tmp.setBtnName("주변 검색");
+//        totalPlanList.add(tmp);
+//        totalPlanAdapter.notifyDataSetChanged();
+//
+//        for(listClass t : totalPlanList)
+//        {
+//            latLngs.add(t.getlatLng());
+//            mainGoogleMap.addMark(t.getlatLng(),t.getName());
+//        }
+//        mainGoogleMap.addPolyline(latLngs);
     }
     void addDB(listClass tmp)
     {
-        sqlDB= listDBHelper.getReadableDatabase();
-        String sql="INSERT INTO plantable VALUES ('"+ localDate.toString() +"', '"+tmp.getId()+"');";
-        Log.d("sql",sql);
-        sqlDB.execSQL(sql);
-
-        final String urlStr="https://cling13.iwinv.net/insert_ok_place.php?" +
-                "date="+ localDate.toString() +
-                "&placeId="+tmp.getId();
-        Log.d("url",urlStr);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                requestUrl2(urlStr);
-            }
-        }).start();
+//        sqlDB= listDBHelper.getReadableDatabase();
+//        String sql="INSERT INTO plantable VALUES ('"+ localDate.toString() +"', '"+tmp.getId()+"');";
+//        Log.d("sql",sql);
+//        sqlDB.execSQL(sql);
+//
+//        final String urlStr="https://cling13.iwinv.net/insert_ok_place.php?" +
+//                "date="+ localDate.toString() +
+//                "&placeId="+tmp.getId();
+//        Log.d("url",urlStr);
+//
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                requestUrl2(urlStr);
+//            }
+//        }).start();
     }
 
 
@@ -369,21 +366,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     void setDate(TextView date) //날짜 설정
     {
-        mainGoogleMap.clear();
-
-        //읽어오기
-        totalPlanList.clear();
-        sqlDB= listDBHelper.getReadableDatabase();
-
-        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
-
-        Cursor cursor = sqlDB.rawQuery(sql,null);
-        while(cursor.moveToNext()) {
-            totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
-        }
-
-        totalPlanAdapter.notifyDataSetChanged();
-        sqlDB.close();
+//        mainGoogleMap.clear();
+//
+//        //읽어오기
+//        totalPlanList.clear();
+//        sqlDB= listDBHelper.getReadableDatabase();
+//
+//        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
+//
+//        Cursor cursor = sqlDB.rawQuery(sql,null);
+//        while(cursor.moveToNext()) {
+//            totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
+//        }
+//
+//        totalPlanAdapter.notifyDataSetChanged();
+//        sqlDB.close();
     }
 }
 
