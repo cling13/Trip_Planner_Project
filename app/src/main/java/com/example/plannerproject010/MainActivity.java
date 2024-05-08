@@ -38,8 +38,14 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, ItemClickListner {
 
@@ -56,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     Handler handler = new Handler();
     TextView textStartDate, textEndDate;
     DatePickerDialog startDatePicker, endDatePicker;
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     ItemClickListner itemClickListner= new ItemClickListner() {
         @Override
@@ -77,27 +84,65 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         DatePickerDialog.OnDateSetListener startDateListner =
                 (datePicker, i, i1, i2) -> {
-                    textStartDate.setText(i + "-" + i1+1 + "-" + i2);
+                    LocalDate startDate = LocalDate.of(i, i1 + 1, i2);
+                    LocalDate endDate = LocalDate.parse(textEndDate.getText().toString(),formatter);
+
+                    String text = startDate.format(formatter);
+                    textStartDate.setText(text);
 
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(i, i1, i2);
 
                     endDatePicker.getDatePicker().setMinDate(selectedDate.getTimeInMillis());
+
+                    long numOfDaysBetween = ChronoUnit.DAYS.between(startDate, endDate);
+                    List<LocalDate> dateBetween = IntStream.iterate(0, j -> j + 1)
+                            .limit(numOfDaysBetween+1)
+                            .mapToObj(j -> startDate.plusDays(j))
+                            .collect(Collectors.toList());
+
+                    totalPlanList.clear();
+                    for(LocalDate localDate:dateBetween){
+
+                        String date = localDate.format(formatter);
+
+                        PlanClass tmp = new PlanClass(MainActivity.this,date);
+                        totalPlanList.add(tmp);
+                        planAdapter.notifyDataSetChanged();
+                    }
+
+
                 };
 
         DatePickerDialog.OnDateSetListener endDateListner =
                 (datePicker, i, i1, i2) -> {
-                    textEndDate.setText(i + "-" + i1+1 + "-" + i2);
+                    LocalDate startDate = LocalDate.parse(textStartDate.getText().toString(),formatter);
+                    LocalDate endDate = LocalDate.of(i, i1 + 1, i2);
+
+                    String text = endDate.format(formatter);
+                    textStartDate.setText(text);
 
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(i, i1, i2);
 
                     startDatePicker.getDatePicker().setMaxDate(selectedDate.getTimeInMillis());
-                    String date = (i + "-" + (i1+1) + "-" + i2);
 
-                    PlanClass tmp = new PlanClass(MainActivity.this,date);
-                    totalPlanList.add(tmp);
-                    planAdapter.notifyDataSetChanged();
+                    long numOfDaysBetween = ChronoUnit.DAYS.between(startDate, endDate);
+                    List<LocalDate> dateBetween = IntStream.iterate(0, j -> j + 1)
+                            .limit(numOfDaysBetween+1)
+                            .mapToObj(j -> startDate.plusDays(j))
+                            .collect(Collectors.toList());
+
+
+                    totalPlanList.clear();
+                    for(LocalDate localDate:dateBetween) {
+
+                        String date = localDate.format(formatter);
+
+                        PlanClass tmp = new PlanClass(MainActivity.this, date);
+                        totalPlanList.add(tmp);
+                        planAdapter.notifyDataSetChanged();
+                    }
                 };
 
         Calendar calendar = Calendar.getInstance();
@@ -189,8 +234,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         textStartDate = (TextView) findViewById(R.id.textStartDate);
         textEndDate = (TextView) findViewById(R.id.textEndDate);
 
-        textStartDate.setText(calendar.get(Calendar.YEAR)+"-"+calendar.get(Calendar.MONTH)+"-"+calendar.get(Calendar.DATE));
-        textEndDate.setText(calendar.get(Calendar.YEAR)+"-"+calendar.get(Calendar.MONTH)+"-"+calendar.get(Calendar.DATE));
+        LocalDate localDate = LocalDate.of(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DATE));
+        String sDate = localDate.format(formatter);
+        textStartDate.setText(sDate);
+        textEndDate.setText(sDate);
 
         textStartDate.setOnClickListener(v-> {
             startDatePicker.show();
