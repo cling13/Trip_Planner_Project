@@ -49,7 +49,6 @@ import java.util.stream.IntStream;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, ItemClickListner {
 
-    MyGoogleMap mainGoogleMap;
     LocationManager locationManager;
     SimpleAdapter totalPlanAdapter;
     PlanAdapter planAdapter;
@@ -57,7 +56,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     ArrayList<listClass> msgBoxList;
     SQLiteDatabase sqlDB;
     MyDBHelper listDBHelper, mapDBHelper;
-    ArrayList<LatLng> latLngs = new ArrayList<>();
     public static Context context;
     Handler handler = new Handler();
     TextView textStartDate, textEndDate;
@@ -120,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     LocalDate endDate = LocalDate.of(i, i1 + 1, i2);
 
                     String text = endDate.format(formatter);
-                    textStartDate.setText(text);
+                    textEndDate.setText(text);
 
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(i, i1, i2);
@@ -215,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
         //리사이클러뷰 어댑터와 핸들러 연결
         totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
-        planAdapter = new PlanAdapter(totalPlanList);
+        planAdapter = new PlanAdapter(this, totalPlanList,mapFragment);
         //totalPlanAdapter = new SimpleAdapter(totalPlanList, this);
         //ItemTouchHelper helper = new ItemTouchHelper(new ItemTouchHelperCallback(totalPlanAdapter));
         totalPlanListView.setAdapter(planAdapter);
@@ -263,25 +261,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        }
 //        totalPlanAdapter.notifyDataSetChanged();
 //        sqlDB.close();
-
-
     }
 
     //세컨드 액티비티에서 플랜 정보 받아와서 리스트에 추가해 주는 부분
-    ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
 
-                // getResultCode가 0일 경우 세컨드 액티비티에서 넘어옴
-                if (result.getResultCode() == 1) {
-                    ArrayList<listClass> tmp = new ArrayList<>();
-                    tmp = (ArrayList<listClass>) result.getData().getSerializableExtra("data");
-                    for(int i=0 ; i<tmp.size(); i++) {
-                        addDB(tmp.get(i));
-                        addList(tmp.get(i));
-                    }
-                }
-            });
 
     @Override
     public void onItemClick(int position) {
