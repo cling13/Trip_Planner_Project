@@ -20,6 +20,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewDebug;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -245,6 +247,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //            }
 //        });
 
+        Button btnMakePlan = (Button) findViewById(R.id.btnMakePlan);
+        btnMakePlan.setOnClickListener(view -> {
+            List<double[]> latLngs = new ArrayList<>();
+            for(PlanClass plan: totalPlanList){
+                ArrayList<listClass> planlist = plan.getPlanList();
+                for(listClass item: planlist){
+                    latLngs.add(new double[]{item.lat,item.lng});
+                }
+            }
+            int k=2;
+            KMeans kMeans = new KMeans(k,latLngs);
+            List<List<double[]>> clusters = kMeans.cluster();
+
+            for(int i=0; i<clusters.size(); i++)
+            {
+                List<double[]> cluster = clusters.get(i);
+                Log.d("cluter" + (i+1),"Size: "+cluster.size());
+                for(double[] point : cluster){
+                    Log.d("Cluster"+(i+1),"Point: "+point[0]+","+point[1]);
+                }
+            }
+
+        });
 
         textStartDate = (TextView) findViewById(R.id.textStartDate);
         textEndDate = (TextView) findViewById(R.id.textEndDate);

@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +27,6 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
     SimpleAdapter totalPlanAdapter;
     private ItemClickListner itemClickListner;
     //static SupportMapFragment mapFragment;
-
-
 
     class ViewHolder extends RecyclerView.ViewHolder{
         TextView textView;
@@ -125,4 +124,8 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
         return items.size();
     }
 
+    public ArrayList<listClass> getAll()
+    {
+        return totalPlanAdapter.getAll();
+    }
 }

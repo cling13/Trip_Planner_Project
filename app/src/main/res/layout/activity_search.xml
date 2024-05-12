@@ -19,7 +19,7 @@
             android:layout_weight="1"
             android:ems="10"
             android:inputType="text"
-            android:text="롯데월드" />
+            android:text="" />
 
         <Button
             android:id="@+id/placeSearchBtn"

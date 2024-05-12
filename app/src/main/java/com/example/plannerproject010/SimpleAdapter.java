@@ -200,5 +200,10 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.ViewHolder
             exception.printStackTrace();
         });
     }
+
+    public ArrayList<listClass> getAll()
+    {
+        return data;
+    }
 }
 
