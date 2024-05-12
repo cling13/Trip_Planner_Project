@@ -27,36 +27,21 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder> implements OnMapReadyCallback {
+public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
     List<PlanClass> items;
-    Context context;
-    ArrayList<listClass> totalPlanList = new ArrayList<>();
-    ActivityResultLauncher<Intent> mStartForResult;
+    AppCompatActivity context;
     SimpleAdapter totalPlanAdapter;
-    static MyGoogleMap mainGoogleMap;
-    static ArrayList<LatLng> latLngs = new ArrayList<>();
-    static SupportMapFragment mapFragment;
+    ActivityResultLauncher<Intent> mStartForResult;
+    ArrayList<listClass> tmpLIst = new ArrayList<>();
+    //static SupportMapFragment mapFragment;
 
-    @Override
-    public void onMapReady(@NonNull GoogleMap googleMap) {
-        mainGoogleMap = new MyGoogleMap(googleMap);
-        mainGoogleMap.setgMap();
-//
-//        sqlDB= listDBHelper.getReadableDatabase();
-//        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
-//        Log.d("sql2",sql);
-//        Cursor cursor = sqlDB.rawQuery(sql,null);
-//         while(cursor.moveToNext()) {
-//            totalPlanAdapter.addItemList(cursor.getString(1), MainActivity.this);
-//        }
-//        totalPlanAdapter.notifyDataSetChanged();
-//        sqlDB.close();
-    }
+
 
     class ViewHolder extends RecyclerView.ViewHolder{
         TextView textView;
         RecyclerView placeList;
         Button addBtn;
+        ArrayList<listClass> totalPlanList = new ArrayList<>();
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -68,37 +53,44 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder> im
             addBtn.setOnClickListener(view -> {
                 Intent intent = new Intent(context, SearchActivity.class);
                 mStartForResult.launch(intent);
+                for(listClass tmp:tmpLIst)
+                    totalPlanList.add(tmp);
+
+                totalPlanAdapter.notifyDataSetChanged();
+                notifyDataSetChanged();
             });
         }
+
     }
 
     public PlanAdapter(AppCompatActivity context, List<PlanClass> items, SupportMapFragment mapFragment)
     {
         this.context = context;
         this.items=items;
-        this.mapFragment = mapFragment;
+        //this.mapFragment = mapFragment;
 
-        mStartForResult= context.registerForActivityResult(
+        mStartForResult = context.registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     // getResultCode가 0일 경우 세컨드 액티비티에서 넘어옴
                     if (result.getResultCode() == 1) {
                         ArrayList<listClass> tmp = new ArrayList<>();
                         tmp = (ArrayList<listClass>) result.getData().getSerializableExtra("data");
-                        for(int i=0 ; i<tmp.size(); i++) {
+                        tmpLIst.clear();
+                        for (int i = 0; i < tmp.size(); i++) {
                             addList(tmp.get(i));
                         }
                     }
                 });
-
-        totalPlanAdapter = new SimpleAdapter(totalPlanList, null);
     }
 
     void addList(listClass tmp)
     {
         tmp.setBtnName("주변 검색");
-        totalPlanList.add(tmp);
+        //totalPlanList.add(tmp);
+        tmpLIst.add(tmp);
         totalPlanAdapter.notifyDataSetChanged();
+        notifyDataSetChanged();
 
         //latLngs.add(tmp.getlatLng());
         //mainGoogleMap.addMark(tmp.getlatLng(),tmp.getName());
@@ -115,10 +107,6 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder> im
         view = inflater.inflate(R.layout.plan_list_obj, parent, false);
         PlanAdapter.ViewHolder vh=new PlanAdapter.ViewHolder(view);
 
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(context);
-        vh.placeList.setLayoutManager(layoutManager);
-        vh.placeList.setAdapter(totalPlanAdapter);
-
         return vh;
     }
 
@@ -131,9 +119,9 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder> im
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(holder.itemView.getContext());
         holder.placeList.setLayoutManager(layoutManager);
-        SimpleAdapter simpleAdapter = new SimpleAdapter(text.getPlanList(), null);
-        holder.placeList.setAdapter(simpleAdapter);
-        simpleAdapter.notifyDataSetChanged();
+        totalPlanAdapter = new SimpleAdapter(holder.totalPlanList, null);
+        holder.placeList.setAdapter(totalPlanAdapter);
+        totalPlanAdapter.notifyDataSetChanged();
     }
 
     @Override

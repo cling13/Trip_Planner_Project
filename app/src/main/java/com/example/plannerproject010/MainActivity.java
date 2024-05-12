@@ -49,6 +49,7 @@ import java.util.stream.IntStream;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, ItemClickListner {
 
+    MyGoogleMap mainGoogleMap;
     LocationManager locationManager;
     SimpleAdapter totalPlanAdapter;
     PlanAdapter planAdapter;
@@ -211,12 +212,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Button goSecActBtn = (Button) findViewById(R.id.plan_Add_Btn);
         RecyclerView totalPlanListView = findViewById(R.id.planList);
         totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
+
         //리사이클러뷰 어댑터와 핸들러 연결
         totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
         planAdapter = new PlanAdapter(this, totalPlanList,mapFragment);
+        totalPlanListView.setAdapter(planAdapter);
+
         //totalPlanAdapter = new SimpleAdapter(totalPlanList, this);
         //ItemTouchHelper helper = new ItemTouchHelper(new ItemTouchHelperCallback(totalPlanAdapter));
-        totalPlanListView.setAdapter(planAdapter);
         //helper.attachToRecyclerView(totalPlanListView);
 
         //세컨드 액티비티로 전환하는 버튼
@@ -249,8 +252,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //맵 초기설정
     public void onMapReady(@NonNull GoogleMap googleMap) {
-//        mainGoogleMap = new MyGoogleMap(googleMap);
-//        mainGoogleMap.setgMap();
+        mainGoogleMap = new MyGoogleMap(googleMap);
+        mainGoogleMap.setgMap();
 //
 //        sqlDB= listDBHelper.getReadableDatabase();
 //        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";

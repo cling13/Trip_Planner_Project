@@ -1,7 +1,5 @@
 package com.example.plannerproject010;
 
-import static com.example.plannerproject010.MainActivity.context;
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
