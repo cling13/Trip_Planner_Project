@@ -33,7 +33,6 @@ import java.util.List;
 
 public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.ViewHolder> implements ItemTouchHelperListner {
 
-
     private ArrayList<listClass> data = null;
     private  ItemClickListner itemClickListner;
 
@@ -146,6 +145,11 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.ViewHolder
     @Override
     public int getItemCount() {
         return data.size();
+    }
+
+    public void addItem(listClass listClass)
+    {
+        data.add(listClass);
     }
 
     public void addItemList(String tmp,Context context)

@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     TextView textStartDate, textEndDate;
     DatePickerDialog startDatePicker, endDatePicker;
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    int pos;
 
     ItemClickListner itemClickListner= new ItemClickListner() {
         @Override
@@ -70,11 +71,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         public void onItemBtnClick(int position) {
-            addDB(msgBoxList.get(position));
-            addList(msgBoxList.get(position));
+            pos=position;
+            Intent intent = new Intent(getApplicationContext(), SearchActivity.class);
+            mStartForResult.launch(intent);
         }
     };
 
+    ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+    result -> {
+        // getResultCode가 0일 경우 세컨드 액티비티에서 넘어옴
+        if (result.getResultCode() == 1) {
+            ArrayList<listClass> tmp = new ArrayList<>();
+            tmp = (ArrayList<listClass>) result.getData().getSerializableExtra("data");
+            for (int i = 0; i < tmp.size(); i++) {
+                addList(tmp.get(i));
+            }
+        }
+    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -215,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //리사이클러뷰 어댑터와 핸들러 연결
         totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
-        planAdapter = new PlanAdapter(this, totalPlanList,mapFragment);
+        planAdapter = new PlanAdapter(this, totalPlanList,mapFragment, itemClickListner);
         totalPlanListView.setAdapter(planAdapter);
 
         //totalPlanAdapter = new SimpleAdapter(totalPlanList, this);
@@ -281,19 +295,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     void addList(listClass tmp)
     {
-//        latLngs.clear();
-//        //mainGoogleMap.clear();
-//
-//        tmp.setBtnName("주변 검색");
-//        totalPlanList.add(tmp);
-//        totalPlanAdapter.notifyDataSetChanged();
-//
-//        for(listClass t : totalPlanList)
-//        {
-//            latLngs.add(t.getlatLng());
-//            mainGoogleMap.addMark(t.getlatLng(),t.getName());
-//        }
-//        mainGoogleMap.addPolyline(latLngs);
+        //latLngs.clear();
+        //mainGoogleMap.clear();
+
+        planAdapter.getItem(pos).planList.add(tmp);
+        planAdapter.totalPlanAdapter.notifyDataSetChanged();
+        //planAdapter.addList(tmp);
+        planAdapter.notifyDataSetChanged();
+
+        //for(listClass t : totalPlanList)
+        //{
+        //    latLngs.add(t.getlatLng());
+        //    mainGoogleMap.addMark(t.getlatLng(),t.getName());
+        //}
+        //mainGoogleMap.addPolyline(latLngs);
     }
     void addDB(listClass tmp)
     {

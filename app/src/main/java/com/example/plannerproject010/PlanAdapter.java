@@ -3,8 +3,6 @@ package com.example.plannerproject010;
 
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,14 +13,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +24,7 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
     List<PlanClass> items;
     AppCompatActivity context;
     SimpleAdapter totalPlanAdapter;
-    ActivityResultLauncher<Intent> mStartForResult;
-    ArrayList<listClass> tmpLIst = new ArrayList<>();
+    private ItemClickListner itemClickListner;
     //static SupportMapFragment mapFragment;
 
 
@@ -41,7 +33,6 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
         TextView textView;
         RecyclerView placeList;
         Button addBtn;
-        ArrayList<listClass> totalPlanList = new ArrayList<>();
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -50,45 +41,45 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
             placeList = itemView.findViewById(R.id.planList);
             addBtn = itemView.findViewById(R.id.addBtn);
 
-            addBtn.setOnClickListener(view -> {
-                Intent intent = new Intent(context, SearchActivity.class);
-                mStartForResult.launch(intent);
-                for(listClass tmp:tmpLIst)
-                    totalPlanList.add(tmp);
-
-                totalPlanAdapter.notifyDataSetChanged();
-                notifyDataSetChanged();
+            addBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(itemClickListner!=null)
+                    {
+                        int position=getAdapterPosition();
+                        if(position!=RecyclerView.NO_POSITION)
+                        {
+                            itemClickListner.onItemBtnClick(position);
+                        }
+                    }
+                }
             });
         }
-
     }
 
-    public PlanAdapter(AppCompatActivity context, List<PlanClass> items, SupportMapFragment mapFragment)
+    public PlanClass getItem(int i)
+    {
+        return items.get(i);
+    }
+
+    public PlanAdapter(AppCompatActivity context, List<PlanClass> items, SupportMapFragment mapFragment, ItemClickListner itemClickListner)
     {
         this.context = context;
         this.items=items;
+        this.itemClickListner=itemClickListner;
         //this.mapFragment = mapFragment;
 
-        mStartForResult = context.registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    // getResultCode가 0일 경우 세컨드 액티비티에서 넘어옴
-                    if (result.getResultCode() == 1) {
-                        ArrayList<listClass> tmp = new ArrayList<>();
-                        tmp = (ArrayList<listClass>) result.getData().getSerializableExtra("data");
-                        tmpLIst.clear();
-                        for (int i = 0; i < tmp.size(); i++) {
-                            addList(tmp.get(i));
-                        }
-                    }
-                });
+
     }
 
     void addList(listClass tmp)
     {
+        totalPlanAdapter.addItem(tmp);
+        totalPlanAdapter.notifyDataSetChanged();
+
         tmp.setBtnName("주변 검색");
         //totalPlanList.add(tmp);
-        tmpLIst.add(tmp);
+
         totalPlanAdapter.notifyDataSetChanged();
         notifyDataSetChanged();
 
@@ -119,7 +110,7 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(holder.itemView.getContext());
         holder.placeList.setLayoutManager(layoutManager);
-        totalPlanAdapter = new SimpleAdapter(holder.totalPlanList, null);
+        totalPlanAdapter = new SimpleAdapter(items.get(position).planList, null);
         holder.placeList.setAdapter(totalPlanAdapter);
         totalPlanAdapter.notifyDataSetChanged();
     }
