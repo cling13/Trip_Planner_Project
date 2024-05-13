@@ -92,23 +92,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     });
 
+    DatePickerDialog.OnDateSetListener endDateListener, startDateListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        DatePickerDialog.OnDateSetListener startDateListner =
+        startDateListener =
                 (datePicker, i, i1, i2) -> {
+
                     LocalDate startDate = LocalDate.of(i, i1 + 1, i2);
                     LocalDate endDate = LocalDate.parse(textEndDate.getText().toString(),formatter);
 
                     String text = startDate.format(formatter);
                     textStartDate.setText(text);
 
-                    Calendar selectedDate = Calendar.getInstance();
-                    selectedDate.set(i, i1, i2);
+                    Calendar cal = Calendar.getInstance();
+                    cal.set(i, i1, i2);
 
-                    endDatePicker.getDatePicker().setMinDate(selectedDate.getTimeInMillis());
+                    endDatePicker = new DatePickerDialog(MainActivity.this, endDateListener ,endDatePicker.getDatePicker().getYear(),endDatePicker.getDatePicker().getMonth(),endDatePicker.getDatePicker().getDayOfMonth());
+
+                    // startDatePicker의 최대 날짜를 선택된 날짜로 설정합니다.
+                    endDatePicker.getDatePicker().setMinDate(cal.getTimeInMillis());
+
 
                     long numOfDaysBetween = ChronoUnit.DAYS.between(startDate, endDate);
                     List<LocalDate> dateBetween = IntStream.iterate(0, j -> j + 1)
@@ -125,22 +132,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         totalPlanList.add(tmp);
                         planAdapter.notifyDataSetChanged();
                     }
-
-
                 };
 
-        DatePickerDialog.OnDateSetListener endDateListner =
+        endDateListener =
                 (datePicker, i, i1, i2) -> {
+
                     LocalDate startDate = LocalDate.parse(textStartDate.getText().toString(),formatter);
                     LocalDate endDate = LocalDate.of(i, i1 + 1, i2);
 
                     String text = endDate.format(formatter);
                     textEndDate.setText(text);
 
-                    Calendar selectedDate = Calendar.getInstance();
-                    selectedDate.set(i, i1, i2);
+                    Calendar cal = Calendar.getInstance();
+                    cal.set(i, i1, i2);
 
-                    startDatePicker.getDatePicker().setMaxDate(selectedDate.getTimeInMillis());
+                    startDatePicker = new DatePickerDialog(MainActivity.this, startDateListener,startDatePicker.getDatePicker().getYear(),startDatePicker.getDatePicker().getMonth(),startDatePicker.getDatePicker().getDayOfMonth());
+                    // startDatePicker의 최대 날짜를 선택된 날짜로 설정합니다.
+                    startDatePicker.getDatePicker().setMaxDate(cal.getTimeInMillis());
 
                     long numOfDaysBetween = ChronoUnit.DAYS.between(startDate, endDate);
                     List<LocalDate> dateBetween = IntStream.iterate(0, j -> j + 1)
@@ -160,9 +168,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 };
 
+
+
         Calendar calendar = Calendar.getInstance();
-        startDatePicker = new DatePickerDialog(MainActivity.this,startDateListner, calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DATE));
-        endDatePicker = new DatePickerDialog(MainActivity.this,endDateListner, calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DATE));
+        startDatePicker = new DatePickerDialog(MainActivity.this,startDateListener, calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DATE));
+        endDatePicker = new DatePickerDialog(MainActivity.this,endDateListener, calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DATE));
 
         context=this;
         locationManager=(LocationManager) getSystemService(Context.LOCATION_SERVICE);
