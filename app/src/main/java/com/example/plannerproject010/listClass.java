@@ -28,8 +28,12 @@ public class listClass implements Serializable{
         this.lat=latLng.latitude;
         this.lng=latLng.longitude;
         ByteArrayOutputStream stream=new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG,100,stream);
-        this.image=stream.toByteArray();
+        if(image==null)
+            this.image=null;
+        else {
+            image.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+            this.image = stream.toByteArray();
+        }
         this.btnName=btnName;
         this.id=id;
     }

@@ -281,6 +281,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         });
 
+        Button btnMakeAllPlan = (Button) findViewById(R.id.btnMakeAllPlan);
+        btnMakeAllPlan.setOnClickListener(view -> {
+            LatLng latLng = new LatLng(37.511167,127.098328);
+            mainGoogleMap.findNearbyRestaurants(latLng);
+        });
+
         textStartDate = (TextView) findViewById(R.id.textStartDate);
         textEndDate = (TextView) findViewById(R.id.textEndDate);
 
