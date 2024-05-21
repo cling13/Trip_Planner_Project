@@ -284,7 +284,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Button btnMakeAllPlan = (Button) findViewById(R.id.btnMakeAllPlan);
         btnMakeAllPlan.setOnClickListener(view -> {
             LatLng latLng = new LatLng(37.511167,127.098328);
-            requestUrl2();
+            final String urlStr="https://cling13.iwinv.net/json.php?" +
+                    "minLat="+ ((latLng.latitude) - 0.5) +
+                    "&maxLat="+ ((latLng.latitude) + 0.5) +
+                    "&minLng="+ ((latLng.longitude) - 0.5) +
+                    "&maxLng="+ ((latLng.longitude) + 0.5);
+
+        Log.d("url",urlStr);
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    requestUrl2(urlStr);
+                }
+            }).start();
         });
 
         textStartDate = (TextView) findViewById(R.id.textStartDate);
@@ -397,6 +410,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 connection.disconnect();
             }
         } catch (Exception e) {
+            Log.d("execption",e.toString());
         }
         println(output.toString());
     }
@@ -413,14 +427,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void jsonParsing(String json) {
         try {
-            JSONObject jsonObject = new JSONObject(json);
-            JSONArray phoneBookArray = jsonObject.getJSONArray("PlaceTable");
+            JSONArray jsonArray = new JSONArray(json);
 
             sqlDB= listDBHelper.getWritableDatabase();
             listDBHelper.onUpgrade(sqlDB,1,1);
 
-            for (int i = 0; i < phoneBookArray.length(); i++) {
-                JSONObject phoneBookObject = phoneBookArray.getJSONObject(i);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject phoneBookObject = jsonArray.getJSONObject(i);
                 String id = phoneBookObject.getString("id");
                 Double lat = phoneBookObject.getDouble("lat");
                 Double lng = phoneBookObject.getDouble("lng");
@@ -433,7 +446,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             sqlDB.close();
 
-            totalPlanAdapter.notifyDataSetChanged();
         } catch (JSONException e) {
             e.printStackTrace();
         }
