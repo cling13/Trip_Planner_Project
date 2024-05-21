@@ -284,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Button btnMakeAllPlan = (Button) findViewById(R.id.btnMakeAllPlan);
         btnMakeAllPlan.setOnClickListener(view -> {
             LatLng latLng = new LatLng(37.511167,127.098328);
-            mainGoogleMap.findNearbyRestaurants(latLng);
+            requestUrl2();
         });
 
         textStartDate = (TextView) findViewById(R.id.textStartDate);
@@ -414,35 +414,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void jsonParsing(String json) {
         try {
             JSONObject jsonObject = new JSONObject(json);
-            JSONArray phoneBookArray = jsonObject.getJSONArray("placetable");
+            JSONArray phoneBookArray = jsonObject.getJSONArray("PlaceTable");
 
             sqlDB= listDBHelper.getWritableDatabase();
             listDBHelper.onUpgrade(sqlDB,1,1);
 
             for (int i = 0; i < phoneBookArray.length(); i++) {
                 JSONObject phoneBookObject = phoneBookArray.getJSONObject(i);
-                String date = phoneBookObject.getString("date");
-                String id = phoneBookObject.getString("placeId");
-                Log.d("date",date);
+                String id = phoneBookObject.getString("id");
+                Double lat = phoneBookObject.getDouble("lat");
+                Double lng = phoneBookObject.getDouble("lng");
+                int time = phoneBookObject.getInt("time");
+                Log.d("date",id);
+
                 String sql = "insert into plantable values ('"
-                        + date +"', '"+ id +"')";
-                sqlDB.execSQL(sql);
-            }
-            sqlDB.close();
-
-            phoneBookArray = jsonObject.getJSONArray("LatLngtable");
-
-            sqlDB= mapDBHelper.getWritableDatabase();
-            mapDBHelper.onUpgrade(sqlDB,1,1);
-
-            for (int i = 0; i < phoneBookArray.length(); i++) {
-                JSONObject phoneBookObject = phoneBookArray.getJSONObject(i);
-                String date = phoneBookObject.getString("date");
-                String lat = phoneBookObject.getString("lat");
-                String lng = phoneBookObject.getString("lng");
-                String sql = "insert into plantable values ('"
-                        + date +"', '"+ lat +"','"+lng+"')";
-                Log.d("SQL", sql);
+                        + id +"', '"+ lat +"','"+lng+"','"+time+"')";
                 sqlDB.execSQL(sql);
             }
             sqlDB.close();
