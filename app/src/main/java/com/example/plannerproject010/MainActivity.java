@@ -38,6 +38,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
@@ -429,22 +430,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         try {
             JSONArray jsonArray = new JSONArray(json);
 
-            sqlDB= listDBHelper.getWritableDatabase();
-            listDBHelper.onUpgrade(sqlDB,1,1);
+//            sqlDB= listDBHelper.getWritableDatabase();
+//            listDBHelper.onUpgrade(sqlDB,1,1);
+            TravelPlanner travelPlanner = new TravelPlanner();
 
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject phoneBookObject = jsonArray.getJSONObject(i);
                 String id = phoneBookObject.getString("id");
                 Double lat = phoneBookObject.getDouble("lat");
                 Double lng = phoneBookObject.getDouble("lng");
-                int time = phoneBookObject.getInt("time");
+                Double time = (double) phoneBookObject.getInt("time");
                 Log.d("date",id);
 
-                String sql = "insert into plantable values ('"
-                        + id +"', '"+ lat +"','"+lng+"','"+time+"')";
-                sqlDB.execSQL(sql);
+                travelPlanner.add(id,lat,lng,time);
+
+//                String sql = "insert into plantable values ('"
+//                        + id +"', '"+ lat +"','"+lng+"','"+time+"')";
+//                sqlDB.execSQL(sql);
             }
-            sqlDB.close();
+            travelPlanner.start(10);
+//            sqlDB.close();
 
         } catch (JSONException e) {
             e.printStackTrace();
