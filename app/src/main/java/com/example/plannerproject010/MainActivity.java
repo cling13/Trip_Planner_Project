@@ -12,6 +12,7 @@ import android.Manifest;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.LocationManager;
@@ -37,6 +38,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
@@ -284,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Button btnMakeAllPlan = (Button) findViewById(R.id.btnMakeAllPlan);
         btnMakeAllPlan.setOnClickListener(view -> {
-            LatLng latLng = new LatLng(37.511167,127.098328);
+            LatLng latLng = new LatLng(34.6656768,135.4323185);
             final String urlStr="https://cling13.iwinv.net/json.php?" +
                     "minLat="+ ((latLng.latitude) - 0.5) +
                     "&maxLat="+ ((latLng.latitude) + 0.5) +
@@ -452,7 +454,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //            sqlDB.close();
 
         } catch (JSONException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

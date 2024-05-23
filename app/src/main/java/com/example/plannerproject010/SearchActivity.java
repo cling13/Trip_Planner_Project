@@ -12,6 +12,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -179,6 +180,10 @@ public class SearchActivity extends AppCompatActivity implements OnMapReadyCallb
                                             placesClient.fetchPhoto(photoRequest).addOnSuccessListener((fetchPhotoResponse) -> {
                                                 Bitmap bitmap = fetchPhotoResponse.getBitmap();
                                                 listClass tmp = new listClass(bitmap, placeName, placeAddress, placeLatLng, "추가", placeId);
+                                                Log.d("name",placeName);
+                                                Log.d("id",placeId);
+                                                Log.d("lat",Double.toString(placeLatLng.latitude));
+                                                Log.d("lng",Double.toString(placeLatLng.longitude));
                                                 listClass.add(tmp);
                                                 simpleAdapter.notifyDataSetChanged();
                                             }).addOnFailureListener((exception) -> {

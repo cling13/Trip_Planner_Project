@@ -2,6 +2,9 @@ package com.example.plannerproject010;
 
 import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,12 +27,15 @@ public class TravelPlanner {
         }
     }
 
-    public  double haversine(double lat1, double lon1, double lat2, double lon2) {
-        double dlat = Math.toRadians(lat2 - lat1);
-        double dlon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dlat / 2) * Math.sin(dlat / 2) + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dlon / 2) * Math.sin(dlon / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return EARTH_RADIUS_KM * c;
+    public  double[] haversine(String val1, String val2) {
+        double[] dou = MyGoogleMap.getTransitRoute(val1,val2);
+        Log.d("doubledoubledoubledoubledouble",Double.toString(dou[0])+Double.toString(dou[1]));
+        return dou;
+//        double dlat = Math.toRadians(lat2 - lat1);
+//        double dlon = Math.toRadians(lon2 - lon1);
+//        double a = Math.sin(dlat / 2) * Math.sin(dlat / 2) + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dlon / 2) * Math.sin(dlon / 2);
+//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+//        return EARTH_RADIUS_KM * c;
     }
 
     public  List<List<Destination>> generateAllCombinations(List<Destination> destinations) {
@@ -53,17 +59,16 @@ public class TravelPlanner {
         }
     }
 
-    public  double[] calculateCourseTime(List<Destination> course) {
+    public  double[] calculateCourseTime(List<Destination> course){
         double totalTime = 0;
         double totalDistance = 0;
 
         for (int i = 0; i < course.size(); i++) {
             totalTime += course.get(i).time;
             if (i < course.size() - 1) {
-                double distance = haversine(course.get(i).lat, course.get(i).lon, course.get(i + 1).lat, course.get(i + 1).lon);
-                double travelTime = distance / TRAVEL_SPEED;
-                totalTime += travelTime;
-                totalDistance += distance;
+                double[] distance = haversine(course.get(i).name, course.get(i + 1).name);
+                totalTime += distance[0];
+                totalDistance += distance[1];
             }
         }
         return new double[]{totalTime, totalDistance};
@@ -89,7 +94,7 @@ public class TravelPlanner {
         return bestCourse;
     }
 
-    public void start(double totalityTime) {
+    public void start(double totalityTime) throws IOException {
 
         double totalTravelTime = totalityTime; // 총 여행 시간 (시간 단위)
 
