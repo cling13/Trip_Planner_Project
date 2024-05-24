@@ -243,7 +243,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
 
         //리사이클러뷰 어댑터와 핸들러 연결
-        totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
         planAdapter = new PlanAdapter(this, totalPlanList,mapFragment, itemClickListner);
         totalPlanListView.setAdapter(planAdapter);
 
@@ -431,9 +430,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void jsonParsing(String json) {
         try {
             JSONArray jsonArray = new JSONArray(json);
-
-//            sqlDB= listDBHelper.getWritableDatabase();
-//            listDBHelper.onUpgrade(sqlDB,1,1);
             TravelPlanner travelPlanner = new TravelPlanner();
 
             for (int i = 0; i < jsonArray.length(); i++) {
@@ -445,13 +441,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Log.d("date",id);
 
                 travelPlanner.add(id,lat,lng,time);
-
-//                String sql = "insert into plantable values ('"
-//                        + id +"', '"+ lat +"','"+lng+"','"+time+"')";
-//                sqlDB.execSQL(sql);
             }
             travelPlanner.start(10);
-//            sqlDB.close();
 
         } catch (JSONException e) {
             throw new RuntimeException(e);

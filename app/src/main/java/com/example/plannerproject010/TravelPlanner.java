@@ -1,12 +1,25 @@
 package com.example.plannerproject010;
 
-import android.util.Log;
+import static com.example.plannerproject010.MainActivity.context;
 
+import android.app.AlertDialog;
+import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.net.PlacesClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
 
 public class TravelPlanner {
     private  final double EARTH_RADIUS_KM = 6371.0;
@@ -31,11 +44,6 @@ public class TravelPlanner {
         double[] dou = MyGoogleMap.getTransitRoute(val1,val2);
         Log.d("doubledoubledoubledoubledouble",Double.toString(dou[0])+Double.toString(dou[1]));
         return dou;
-//        double dlat = Math.toRadians(lat2 - lat1);
-//        double dlon = Math.toRadians(lon2 - lon1);
-//        double a = Math.sin(dlat / 2) * Math.sin(dlat / 2) + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dlon / 2) * Math.sin(dlon / 2);
-//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-//        return EARTH_RADIUS_KM * c;
     }
 
     public  List<List<Destination>> generateAllCombinations(List<Destination> destinations) {
@@ -97,18 +105,39 @@ public class TravelPlanner {
     public void start(double totalityTime) throws IOException {
 
         double totalTravelTime = totalityTime; // 총 여행 시간 (시간 단위)
+        ArrayList<listClass> tmp=new ArrayList<>();
+        Places.initialize(context.getApplicationContext(), "AIzaSyCQEHHAP6BPVkQoSWMXArg8DtS7zDXDAVA");
+        PlacesClient placesClient = Places.createClient(context);
+        View v = View.inflate(context,R.layout.make_plan,null);
 
+        RecyclerView makePlanRecyclerView = (RecyclerView) v.findViewById(R.id.list);
+        TextView timeText = (TextView) v.findViewById(R.id.totaltime);
+        TextView disText = (TextView) v.findViewById(R.id.totaldis);
         List<Destination> bestCourse = findBestCourse(destinations, totalTravelTime);
+
+        makePlanRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+        SimpleAdapter simpleAdapter = new SimpleAdapter(tmp,null);
+        makePlanRecyclerView.setAdapter(simpleAdapter);
 
         if (!bestCourse.isEmpty()) {
             Log.d("aaaaaaaaaaaaa","추천 여행 코스:");
             bestCourse.forEach(place -> Log.d("aaaaaaaaaaaa",place.name + " (관광 소요 시간: " + place.time + "시간)"));
+
+            bestCourse.forEach(place -> MyGoogleMap.placeIdSearch(place.name,placesClient,tmp,simpleAdapter));
+
             double[] bestCourseTimeAndDistance = calculateCourseTime(bestCourse);
+            timeText.setText("총 여행 시간"+bestCourseTimeAndDistance[0]+"시간");
+            disText.setText("이동 거리"+bestCourseTimeAndDistance[1]+"km");
+
             Log.d("총 소요 시간: " ,String.format("%.2f", bestCourseTimeAndDistance[0]) + "시간");
             Log.d("총 이동 거리: ", String.format("%.2f", bestCourseTimeAndDistance[1]) + "km");
         } else {
             Log.d("aaaaaaaaaa","주어진 시간 내에 가능한 여행 코스를 찾을 수 없습니다.");
         }
+
+        AlertDialog.Builder dlg = new AlertDialog.Builder(context);
+        dlg.setView(v);
+        dlg.show();
     }
 
     public void add(String id, double lat, double lng, double time)
