@@ -9,6 +9,8 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.ArrayList;
 
 public class PlanClass {
@@ -46,5 +48,9 @@ public class PlanClass {
     public ArrayList<listClass> getPlanList()
     {
         return planList;
+    }
+    public LatLng getLatLng(int pos)
+    {
+        return planList.get(pos).getlatLng();
     }
 }

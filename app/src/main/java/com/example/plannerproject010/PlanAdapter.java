@@ -21,14 +21,14 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
+public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder> {
     List<PlanClass> items;
     AppCompatActivity context;
     SimpleAdapter totalPlanAdapter;
     private ItemClickListner itemClickListner;
-    //static SupportMapFragment mapFragment;
+    static MyGoogleMap googleMap;
 
-    class ViewHolder extends RecyclerView.ViewHolder{
+    class ViewHolder extends RecyclerView.ViewHolder {
         TextView textView;
         RecyclerView placeList;
         Button addBtn;
@@ -43,11 +43,9 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
             addBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if(itemClickListner!=null)
-                    {
-                        int position=getAdapterPosition();
-                        if(position!=RecyclerView.NO_POSITION)
-                        {
+                    if (itemClickListner != null) {
+                        int position = getAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
                             itemClickListner.onItemBtnClick(position);
                         }
                     }
@@ -56,23 +54,18 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
         }
     }
 
-    public PlanClass getItem(int i)
-    {
+    public PlanClass getItem(int i) {
         return items.get(i);
     }
 
-    public PlanAdapter(AppCompatActivity context, List<PlanClass> items, SupportMapFragment mapFragment, ItemClickListner itemClickListner)
-    {
+    public PlanAdapter(AppCompatActivity context, List<PlanClass> items, MyGoogleMap googleMap, ItemClickListner itemClickListner) {
         this.context = context;
-        this.items=items;
-        this.itemClickListner=itemClickListner;
-        //this.mapFragment = mapFragment;
-
-
+        this.items = items;
+        this.itemClickListner = itemClickListner;
+        this.googleMap = googleMap;
     }
 
-    void addList(listClass tmp)
-    {
+    void addList(listClass tmp) {
         totalPlanAdapter.addItem(tmp);
         totalPlanAdapter.notifyDataSetChanged();
 
@@ -91,11 +84,11 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view;
-        Context context=parent.getContext();
-        LayoutInflater inflater=(LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        Context context = parent.getContext();
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         view = inflater.inflate(R.layout.plan_list_obj, parent, false);
-        PlanAdapter.ViewHolder vh=new PlanAdapter.ViewHolder(view);
+        PlanAdapter.ViewHolder vh = new PlanAdapter.ViewHolder(view);
 
         return vh;
     }
@@ -107,9 +100,21 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
         holder.textView.setText(text.getDate());
         holder.addBtn.setText(text.getBtn());
 
+        ItemClickListner itemClick = new ItemClickListner() {
+            @Override
+            public void onItemClick(int position2) {
+                googleMap.moveCamera(items.get(holder.getAdapterPosition()).getLatLng(position2));
+            }
+
+            @Override
+            public void onItemBtnClick(int position) {
+
+            }
+        };
+
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(holder.itemView.getContext());
         holder.placeList.setLayoutManager(layoutManager);
-        totalPlanAdapter = new SimpleAdapter(items.get(position).planList, null);
+        totalPlanAdapter = new SimpleAdapter(items.get(position).planList, itemClick);
         holder.placeList.setAdapter(totalPlanAdapter);
         totalPlanAdapter.notifyDataSetChanged();
     }
@@ -124,8 +129,9 @@ public class PlanAdapter extends RecyclerView.Adapter<PlanAdapter.ViewHolder>{
         return items.size();
     }
 
-    public ArrayList<listClass> getAll()
-    {
+    public ArrayList<listClass> getAll() {
         return totalPlanAdapter.getAll();
     }
 }
+
+

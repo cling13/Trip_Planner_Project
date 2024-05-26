@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, ItemClickListner {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     MyGoogleMap mainGoogleMap;
     LocationManager locationManager;
@@ -239,12 +239,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //xml 아이디 연결
         //Button goSecActBtn = (Button) findViewById(R.id.plan_Add_Btn);
-        RecyclerView totalPlanListView = findViewById(R.id.planList);
-        totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
+
 
         //리사이클러뷰 어댑터와 핸들러 연결
-        planAdapter = new PlanAdapter(this, totalPlanList,mapFragment, itemClickListner);
-        totalPlanListView.setAdapter(planAdapter);
+
 
         //totalPlanAdapter = new SimpleAdapter(totalPlanList, this);
         //ItemTouchHelper helper = new ItemTouchHelper(new ItemTouchHelperCallback(totalPlanAdapter));
@@ -285,21 +283,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Button btnMakeAllPlan = (Button) findViewById(R.id.btnMakeAllPlan);
         btnMakeAllPlan.setOnClickListener(view -> {
-            LatLng latLng = new LatLng(34.6656768,135.4323185);
+
+            LatLng latLng = mainGoogleMap.gMap.getCameraPosition().target;
+
             final String urlStr="https://cling13.iwinv.net/json.php?" +
                     "minLat="+ ((latLng.latitude) - 0.5) +
                     "&maxLat="+ ((latLng.latitude) + 0.5) +
                     "&minLng="+ ((latLng.longitude) - 0.5) +
                     "&maxLng="+ ((latLng.longitude) + 0.5);
 
-        Log.d("url",urlStr);
-
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    requestUrl2(urlStr);
-                }
-            }).start();
+            Log.d("url",urlStr);
+            new Thread(() -> requestUrl2(urlStr)).start();
         });
 
         textStartDate = (TextView) findViewById(R.id.textStartDate);
@@ -324,6 +318,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mainGoogleMap = new MyGoogleMap(googleMap);
         mainGoogleMap.setgMap();
+
+        RecyclerView totalPlanListView = findViewById(R.id.planList);
+        totalPlanListView.setLayoutManager(new LinearLayoutManager(this));
+        planAdapter = new PlanAdapter(this, totalPlanList,mainGoogleMap, itemClickListner);
+        totalPlanListView.setAdapter(planAdapter);
 //
 //        sqlDB= listDBHelper.getReadableDatabase();
 //        String sql="select * from plantable WHERE date = '"+ localDate.toString() +"';";
@@ -338,16 +337,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //세컨드 액티비티에서 플랜 정보 받아와서 리스트에 추가해 주는 부분
 
-
-    @Override
-    public void onItemClick(int position) {
-        //mainGoogleMap.moveCamera(totalPlanList.get(position).getlatLng());
-    }
-
-    @Override
-    public void onItemBtnClick(int position) {
-
-    }
 
     void addList(listClass tmp)
     {
