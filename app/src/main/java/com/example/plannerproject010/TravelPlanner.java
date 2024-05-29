@@ -85,26 +85,25 @@ public class TravelPlanner {
     public  double[] calculateCourseTime(List<Destination> course, boolean lunch, boolean dinner, double startTime, int type){
         double totalTime = startTime;
         double totalDistance = 0;
+        int cnt = 0;
 
         for (int i = 0; i < course.size(); i++) {
             Destination current = course.get(i);
-            totalTime += course.get(i).time;
 
-            if(current.type == "restaurant")
+            if(current.type.equals("restaurant"))
             {
                 if(totalTime >= 11 && totalTime <= 13){
                     lunch = true;
                 }
-                else{
-                    lunch = false;
-                }
                 if(totalTime >=18 && totalTime<=20){
                     dinner = true;
                 }
-                else{
-                    dinner = false;
-                }
+                cnt++;
             }
+
+            totalTime += course.get(i).time;
+
+
 
             if (i < course.size() - 1) {
                 if(type == 1) {
@@ -122,7 +121,7 @@ public class TravelPlanner {
             }
         }
 
-        if(!lunch || !dinner)
+        if(!lunch || !dinner || cnt>1)
         {
             return new double[]{Double.MAX_VALUE,totalDistance};
         }
