@@ -285,7 +285,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Button btnMakeAllPlan = (Button) findViewById(R.id.btnMakeAllPlan);
         btnMakeAllPlan.setOnClickListener(view -> {
+
             LatLng latLng = new LatLng(34.6656768,135.4323185);
+
             final String urlStr="https://cling13.iwinv.net/json.php?" +
                     "minLat="+ ((latLng.latitude) - 0.5) +
                     "&maxLat="+ ((latLng.latitude) + 0.5) +
@@ -435,12 +437,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject phoneBookObject = jsonArray.getJSONObject(i);
                 String id = phoneBookObject.getString("id");
+                String type = phoneBookObject.getString("type");
                 Double lat = phoneBookObject.getDouble("lat");
                 Double lng = phoneBookObject.getDouble("lng");
                 Double time = (double) phoneBookObject.getInt("time");
                 Log.d("date",id);
 
-                travelPlanner.add(id,lat,lng,time);
+                travelPlanner.add(id,lat,lng,time,type);
             }
             travelPlanner.start(10);
 

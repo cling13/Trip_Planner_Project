@@ -22,18 +22,18 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 
 public class TravelPlanner {
-    private  final double EARTH_RADIUS_KM = 6371.0;
-    private  final double TRAVEL_SPEED = 60.0; // km/h
     List<Destination> destinations = new ArrayList<>();
 
      class Destination {
         String name;
+        String type;
         double lat;
         double lon;
         double time;
 
-        Destination(String name, double lat, double lon, double time) {
+        Destination(String name, double lat, double lon, double time, String type) {
             this.name = name;
+            this.type = type;
             this.lat = lat;
             this.lon = lon;
             this.time = time;
@@ -44,6 +44,21 @@ public class TravelPlanner {
         double[] dou = MyGoogleMap.getTransitRoute(val1,val2);
         Log.d("doubledoubledoubledoubledouble",Double.toString(dou[0])+Double.toString(dou[1]));
         return dou;
+    }
+
+    public double haversine2(double lat1, double lng1, double lat2, double lng2)
+    {
+        double EARTH_RADIUS_KM=6371.0;
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lng2 - lng1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return EARTH_RADIUS_KM * c;
     }
 
     public  List<List<Destination>> generateAllCombinations(List<Destination> destinations) {
@@ -67,38 +82,76 @@ public class TravelPlanner {
         }
     }
 
-    public  double[] calculateCourseTime(List<Destination> course){
-        double totalTime = 0;
+    public  double[] calculateCourseTime(List<Destination> course, boolean lunch, boolean dinner, double startTime, int type){
+        double totalTime = startTime;
         double totalDistance = 0;
 
         for (int i = 0; i < course.size(); i++) {
+            Destination current = course.get(i);
             totalTime += course.get(i).time;
+
+            if(current.type == "restaurant")
+            {
+                if(totalTime >= 11 && totalTime <= 13){
+                    lunch = true;
+                }
+                else{
+                    lunch = false;
+                }
+                if(totalTime >=18 && totalTime<=20){
+                    dinner = true;
+                }
+                else{
+                    dinner = false;
+                }
+            }
+
             if (i < course.size() - 1) {
-                double[] distance = haversine(course.get(i).name, course.get(i + 1).name);
-                totalTime += distance[0];
-                totalDistance += distance[1];
+                if(type == 1) {
+                    double[] distance = haversine(course.get(i).name, course.get(i + 1).name);
+                    totalTime += distance[0];
+                    totalDistance += distance[1];
+                    lunch = true;
+                    dinner = true;
+                }
+                else if(type == 2) {
+                    double distance = haversine2(course.get(i).lat, course.get(i).lon, course.get(i + 1).lat, course.get(i + 1).lon);
+                    distance /= 60;
+                    totalTime += distance;
+                }
             }
         }
-        return new double[]{totalTime, totalDistance};
+
+        if(!lunch || !dinner)
+        {
+            return new double[]{Double.MAX_VALUE,totalDistance};
+        }
+
+        return new double[]{totalTime - startTime, totalDistance};
     }
 
     public  List<Destination> findBestCourse(List<Destination> destinations, double totalTravelTime) {
         List<List<Destination>> allCombinations = generateAllCombinations(destinations);
         List<Destination> bestCourse = new ArrayList<>();
         double bestTime = 0;
-        double bestDistance = 0;
+        boolean lunch = true;
+        boolean dinner = true;
+
+        if(8<13)
+            lunch = false;
+        if(8+totalTravelTime > 18)
+            dinner = false;
 
         for (List<Destination> combo : allCombinations) {
-            double[] courseTimeAndDistance = calculateCourseTime(combo);
+            double[] courseTimeAndDistance = calculateCourseTime(combo,lunch,dinner,8.0,2);
             double courseTime = courseTimeAndDistance[0];
-            double courseDistance = courseTimeAndDistance[1];
 
             if (courseTime <= totalTravelTime && courseTime > bestTime) {
                 bestCourse = combo;
                 bestTime = courseTime;
-                bestDistance = courseDistance;
             }
         }
+
         return bestCourse;
     }
 
@@ -125,7 +178,7 @@ public class TravelPlanner {
 
             bestCourse.forEach(place -> MyGoogleMap.placeIdSearch(place.name,placesClient,tmp,simpleAdapter));
 
-            double[] bestCourseTimeAndDistance = calculateCourseTime(bestCourse);
+            double[] bestCourseTimeAndDistance = calculateCourseTime(bestCourse,true,true,8.0,1);
             timeText.setText("총 여행 시간"+bestCourseTimeAndDistance[0]+"시간");
             disText.setText("이동 거리"+bestCourseTimeAndDistance[1]+"km");
 
@@ -140,8 +193,8 @@ public class TravelPlanner {
         dlg.show();
     }
 
-    public void add(String id, double lat, double lng, double time)
+    public void add(String id, double lat, double lng, double time, String type)
     {
-        destinations.add(new Destination(id,lat,lng,time));
+        destinations.add(new Destination(id,lat,lng,time,type));
     }
 }
